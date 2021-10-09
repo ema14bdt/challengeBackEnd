@@ -1,6 +1,4 @@
 const db = require('../database/models');
-const fs = require('fs');
-const path = require('path');
 const {Op} = require('sequelize');
 const getURL = (req) => `${req.protocol}://${req.get('host')}${req.originalUrl}`;
 const getURLBase = (req) => `${req.protocol}://${req.get('host')}`;
@@ -24,7 +22,7 @@ module.exports = {
 
     create: (req, res) => {
         db.Character.create({
-            ...req.body
+            ...req.body,
         })
             .then((characterCreated) => {
                 const response = {
@@ -35,14 +33,77 @@ module.exports = {
                 res.status(201).json(response);
             })
             .catch((err) => {
-                req.file ? fs.unlinkSync(path.join(__dirname, '..', 'uploads', 'characters', req.file.filename)) : null;
-
                 const response = {
                     status: 500,
-                    msg: 'internal server error',
+                    msg: 'Error creating character.',
+                    error: err.message
                 };
+                res.status(500).json(response);
+            });
+    },
 
-                console.log(err);
+    update: (req, res) => {
+        db.Character.findByPk(req.params.id)
+            .then((character) => {
+                db.Character.update(
+                    {
+                        image: req.body.image ? req.body.image : character.image,
+                        name: req.body.name ? req.body.name : character.name,
+                        age: +req.body.age ? +req.body.age : character.age,
+                        weight: +req.body.weight ? +req.body.weight : character.weight,
+                        history: req.body.history ? req.body.history : character.history,
+                    },
+                    {
+                        where: {
+                            id: character.id,
+                        },
+                    }
+                )
+                    .then((result) => {
+                        const response = {
+                            status: 200,
+                            msg: 'Successfully updated character!',
+                            url: getURLBase(req) + `/characters/detail/${character.id}`,
+                        };
+
+                        res.status(200).json(response);
+                    })
+                    .catch((err) => {
+                        const response = {
+                            status: 500,
+                            msg: 'Error updating character.',
+                            error: err.message
+                        };
+                        res.status(500).json(response);
+                    });
+            })
+            .catch((err) => {
+                const response = {
+                    status: 400,
+                    msg: 'The character does not exist.',
+                };
+                res.status(400).json(response);
+            });
+    },
+
+    remove: (req, res) => {
+        db.Character.destroy({
+            where: {
+                id: req.params.id,
+            },
+        })
+            .then((result) => {
+                const response = {
+                    status: 200,
+                    msg: `Character successfully removed.`,
+                };
+                res.status(200).json(response);
+            })
+            .catch((err) => {
+                const response = {
+                    status: 500,
+                    msg: `Error deleting the character.`,
+                };
                 res.status(500).json(response);
             });
     },
@@ -52,23 +113,49 @@ module.exports = {
             include: [{association: 'movie', attributes: ['id', 'image', 'title', 'rating']}],
         })
             .then((character) => {
-                /*character.movie.forEach((mov) => (mov.image = `${req.protocol}://${req.get('host')}/movies/${movie.image}`));
-                character.dataValues.movie.forEach((mov) => {
-                    mov.dataValues.characterMovie = undefined;
-                    mov.dataValues.url = `${req.protocol}://${req.get('host')}/movies/${movie.id}`;
-                    mov.dataValues.id = undefined;
-                }); */
 
                 const response = {
                     meta: {
                         status: 200,
                         url: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
-                        moviesQuantity: character.movie.length,
+    
                     },
-                    image: character.image ? `${req.protocol}://${req.get('host')}/characters/${character.image}` : null,
-                    character: character,
+                    image: character.image ? `/images/characters/${character.image}` : null,
+                    data: character,
                 };
                 res.status(200).json(response);
+            })
+            .catch((err) => res.send(err));
+    },
+
+    search: (req, res) => {
+        db.Character.findAll({
+            where: {
+                [Op.or]: [
+                    {
+                        name: {
+                            [Op.substring]: req.params.keywords,
+                        },
+                    },
+                    {
+                        age: {
+                            [Op.substring]: req.params.keywords,
+                        },
+                    },
+                ],
+            },
+            include: ['movie'],
+        })
+            .then((result) => {
+                let response = {
+                    status: 200,
+                    meta: {
+                        total: result.length,
+                        url: getURL(req),
+                    },
+                    data: result.length === 0 ? 'There is no result for your search' : result,
+                };
+                return res.status(200).json(response);
             })
             .catch((err) => res.send(err));
     },

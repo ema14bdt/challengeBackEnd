@@ -1,0 +1,1 @@
+{"status":200,"meta":{"url":"http://localhost:3000/movies/detail/5"},"image":"/images/movies/Monsters_Inc-img.png","data":{"id":5,"image":"Monsters_Inc-img.png","title":"Monsters, Inc","releaseDate":"2001-12-06","rating":5,"genreId":1,"genre":{"id":1,"name":"Animación","image":null},"character":[]}}

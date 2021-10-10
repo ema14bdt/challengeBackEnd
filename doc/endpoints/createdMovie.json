@@ -1,0 +1,1 @@
+{"status":201,"meta":{"url":"http://localhost:3000/characters/detail/5"},"message":"Successfully created movie","data":{"id":5,"image":"Monsters_Inc-img.png","title":"Monsters, Inc","releaseDate":"2001-12-06T03:00:00.000Z","rating":"5","genreId":"1"}}

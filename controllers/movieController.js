@@ -6,7 +6,7 @@ const getURLBase = (req) => `${req.protocol}://${req.get('host')}`;
 module.exports = {
     list: (req, res) => {
         db.Movie.findAll({
-            attributes: ['id', 'image', 'title', 'releaseDate'],
+            attributes: ['image', 'title', 'releaseDate'],
         })
             .then((movies) => {
                 let response = {

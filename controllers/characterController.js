@@ -5,7 +5,7 @@ const getURLBase = (req) => `${req.protocol}://${req.get('host')}`;
 
 module.exports = {
     list: (req, res) => {
-        db.Character.findAll()
+        db.Character.findAll({attributes: ['image', 'name']})
             .then((characters) => {
                 let response = {
                     status: 200,
